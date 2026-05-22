@@ -5,7 +5,7 @@ import api from '@/lib/api';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useSocketStore } from '@/store/useSocketStore';
 import { useParams } from 'next/navigation';
-import { MoreHorizontal, Plus, GripVertical } from 'lucide-react';
+import { MoreHorizontal, Plus, GripVertical, Pencil, Trash2 } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 
 interface Task {
@@ -38,6 +38,14 @@ export default function BoardPage() {
     const [creatingDescription, setCreatingDescription] = useState('');
     const [creatingStatus, setCreatingStatus] = useState<'Todo' | 'Doing' | 'Done'>('Todo');
     const [isCreatingTask, setIsCreatingTask] = useState(false);
+
+    // Task Edit States
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+    const [editingTitle, setEditingTitle] = useState('');
+    const [editingDescription, setEditingDescription] = useState('');
+    const [editingStatus, setEditingStatus] = useState<'Todo' | 'Doing' | 'Done'>('Todo');
+    const [isEditingTask, setIsEditingTask] = useState(false);
 
     const columns = ['Todo', 'Doing', 'Done'] as const;
 
@@ -175,6 +183,45 @@ export default function BoardPage() {
         }
     };
 
+    const handleOpenEditModal = (task: Task) => {
+        setEditingTaskId(task._id);
+        setEditingTitle(task.title);
+        setEditingDescription(task.description);
+        setEditingStatus(task.status);
+        setIsEditModalOpen(true);
+    };
+
+    const handleEditTask = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingTaskId || !editingTitle.trim()) return;
+
+        setIsEditingTask(true);
+        try {
+            const res = await api.put(`/projects/${projectId}/tasks/${editingTaskId}`, {
+                title: editingTitle,
+                description: editingDescription,
+                status: editingStatus
+            });
+            setTasks(prev => prev.map(t => t._id === editingTaskId ? res.data : t));
+            setIsEditModalOpen(false);
+        } catch (error) {
+            console.error('Failed to update task', error);
+        } finally {
+            setIsEditingTask(false);
+        }
+    };
+
+    const handleDeleteTask = async (taskId: string) => {
+        if (!window.confirm('Are you sure you want to delete this card?')) return;
+
+        try {
+            await api.delete(`/projects/${projectId}/tasks/${taskId}`);
+            setTasks(prev => prev.filter(t => t._id !== taskId));
+        } catch (error) {
+            console.error('Failed to delete task', error);
+        }
+    };
+
     if (loading) {
         return (
             <div className="h-full flex items-center justify-center text-indigo-400">
@@ -271,7 +318,32 @@ export default function BoardPage() {
                                                                 <h4 className="font-bold text-sm text-slate-100 group-hover:text-indigo-300 transition-colors pr-8 leading-relaxed">
                                                                     {task.title}
                                                                 </h4>
-                                                                <GripVertical className="w-4 h-4 text-slate-600 group-hover:text-indigo-400 absolute right-4 top-5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                                <div className="absolute right-3 top-4 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-slate-800/90 backdrop-blur-sm border border-slate-700/80 px-2 py-1 rounded-xl shadow-lg z-20">
+                                                                    <GripVertical className="w-3.5 h-3.5 text-slate-500 cursor-grab" />
+                                                                    <div className="w-px h-3 bg-slate-700"></div>
+                                                                    <button 
+                                                                        onClick={(e) => {
+                                                                            e.preventDefault();
+                                                                            e.stopPropagation();
+                                                                            handleOpenEditModal(task);
+                                                                        }}
+                                                                        className="p-1 hover:bg-slate-700 rounded text-slate-400 hover:text-indigo-400 transition-colors"
+                                                                        title="Edit Card"
+                                                                    >
+                                                                        <Pencil className="w-3.5 h-3.5" />
+                                                                    </button>
+                                                                    <button 
+                                                                        onClick={(e) => {
+                                                                            e.preventDefault();
+                                                                            e.stopPropagation();
+                                                                            handleDeleteTask(task._id);
+                                                                        }}
+                                                                        className="p-1 hover:bg-rose-500/20 rounded text-slate-400 hover:text-rose-400 transition-colors"
+                                                                        title="Delete Card"
+                                                                    >
+                                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                                    </button>
+                                                                </div>
                                                             </div>
                                                             
                                                             <p className="text-xs text-slate-400 line-clamp-2 mt-1 font-medium">{task.description}</p>
@@ -363,9 +435,77 @@ export default function BoardPage() {
                                 </div>
                             </div>
                         </form>
-                    </div>
-                </div>
-            )}
-        </div>
-    );
-}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Edit Card Modal */}
+                                            {isEditModalOpen && (
+                                                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm transition-opacity">
+                                                    <div className="bg-[#1E293B] border border-slate-700 rounded-2xl p-6 w-full max-w-md shadow-2xl relative shadow-black/50 animate-fade-in">
+                                                        <button 
+                                                            onClick={() => setIsEditModalOpen(false)}
+                                                            className="absolute top-5 right-5 text-slate-400 hover:text-white transition-colors text-lg"
+                                                        >
+                                                            ✕
+                                                        </button>
+                                                        <h2 className="text-2xl font-bold text-slate-100 mb-6 tracking-tight">Edit Card</h2>
+                                                        
+                                                        <form onSubmit={handleEditTask} className="space-y-4">
+                                                            <div>
+                                                                <label className="block text-slate-300 text-xs font-bold uppercase tracking-wider mb-2">Card Title</label>
+                                                                <input
+                                                                    type="text"
+                                                                    value={editingTitle}
+                                                                    onChange={(e) => setEditingTitle(e.target.value)}
+                                                                    className="w-full px-4 py-3 rounded-xl border border-slate-600 bg-slate-800 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium"
+                                                                    placeholder="Card Title"
+                                                                    required
+                                                                    autoFocus
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <label className="block text-slate-300 text-xs font-bold uppercase tracking-wider mb-2">Description</label>
+                                                                <textarea
+                                                                    value={editingDescription}
+                                                                    onChange={(e) => setEditingDescription(e.target.value)}
+                                                                    className="w-full px-4 py-3 rounded-xl border border-slate-600 bg-slate-800 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium resize-none h-24"
+                                                                    placeholder="Add details, acceptance criteria, sub-tasks..."
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <label className="block text-slate-300 text-xs font-bold uppercase tracking-wider mb-2">Status</label>
+                                                                <select
+                                                                    value={editingStatus}
+                                                                    onChange={(e) => setEditingStatus(e.target.value as any)}
+                                                                    className="w-full px-4 py-3 rounded-xl border border-slate-600 bg-slate-800 text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium"
+                                                                >
+                                                                    <option value="Todo">Todo</option>
+                                                                    <option value="Doing">Doing</option>
+                                                                    <option value="Done">Done</option>
+                                                                </select>
+                                                            </div>
+                                                            
+                                                            <div className="flex justify-end gap-3 mt-8">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setIsEditModalOpen(false)}
+                                                                    className="px-5 py-2.5 rounded-xl font-bold text-slate-300 hover:text-white hover:bg-slate-700 transition-colors"
+                                                                >
+                                                                    Cancel
+                                                                </button>
+                                                                <button
+                                                                    type="submit"
+                                                                    disabled={isEditingTask}
+                                                                    className="px-5 py-2.5 bg-indigo-500 hover:bg-indigo-600 disabled:opacity-50 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/20 transition-all flex items-center justify-center"
+                                                                >
+                                                                    {isEditingTask ? 'Saving...' : 'Save Changes'}
+                                                                </button>
+                                                            </div>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                }

@@ -1,12 +1,9 @@
 import Link from 'next/link';
-import { Home, Users, Settings, Briefcase, Zap } from 'lucide-react';
+import { Home, Zap } from 'lucide-react';
 
 export default function Sidebar() {
     const navItems = [
         { icon: Home, label: 'Boards', path: '/' },
-        { icon: Briefcase, label: 'Templates', path: '/templates' },
-        { icon: Users, label: 'Members', path: '/members' },
-        { icon: Settings, label: 'Settings', path: '/settings' },
     ];
 
     return (

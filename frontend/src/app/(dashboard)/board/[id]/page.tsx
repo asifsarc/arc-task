@@ -255,23 +255,32 @@ export default function BoardPage() {
                                                         ref={provided.innerRef}
                                                         {...provided.draggableProps}
                                                         {...provided.dragHandleProps}
-                                                        className={`group bg-[#1E293B] hover:bg-slate-800 border border-slate-700/60 hover:border-indigo-500/60 p-5 rounded-2xl cursor-grab transition-all duration-300 relative overflow-hidden backdrop-blur-sm ${snapshot.isDragging ? 'shadow-2xl shadow-indigo-500/40 border-indigo-500/80 rotate-2 scale-[1.03]' : 'hover:-translate-y-1 hover:shadow-xl hover:shadow-indigo-500/20'}`}
+                                                        style={provided.draggableProps.style}
+                                                        className="focus:outline-none"
                                                     >
-                                                        <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-white/5 to-transparent rounded-bl-full pointer-events-none"></div>
-                                                        
-                                                        <div className="flex justify-between items-start mb-3">
-                                                            <h4 className="font-bold text-sm text-slate-100 group-hover:text-indigo-300 transition-colors pr-8 leading-relaxed">
-                                                                {task.title}
-                                                            </h4>
-                                                            <GripVertical className="w-4 h-4 text-slate-600 group-hover:text-indigo-400 absolute right-4 top-5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                                        </div>
-                                                        
-                                                        <p className="text-xs text-slate-400 line-clamp-2 mt-1 font-medium">{task.description}</p>
-                                                        
-                                                        <div className="mt-5 flex items-center justify-between border-t border-slate-700/50 pt-4">
-                                                            <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">MAR 19</div>
-                                                            <div className="flex -space-x-2 relative">
-                                                                <div className="w-7 h-7 rounded-full border-2 border-[#1E293B] bg-gradient-to-tr from-cyan-400 to-indigo-500 z-10 shadow-md"></div>
+                                                        <div 
+                                                            className={`group bg-[#1E293B] hover:bg-slate-800 border border-slate-700/60 hover:border-indigo-500/60 p-5 rounded-2xl cursor-grab relative overflow-hidden backdrop-blur-sm ${
+                                                                snapshot.isDragging 
+                                                                    ? 'shadow-2xl shadow-indigo-500/40 border-indigo-500/80 rotate-2 scale-[1.03] transition-none' 
+                                                                    : 'transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-indigo-500/20'
+                                                            }`}
+                                                        >
+                                                            <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-white/5 to-transparent rounded-bl-full pointer-events-none"></div>
+                                                            
+                                                            <div className="flex justify-between items-start mb-3">
+                                                                <h4 className="font-bold text-sm text-slate-100 group-hover:text-indigo-300 transition-colors pr-8 leading-relaxed">
+                                                                    {task.title}
+                                                                </h4>
+                                                                <GripVertical className="w-4 h-4 text-slate-600 group-hover:text-indigo-400 absolute right-4 top-5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                            </div>
+                                                            
+                                                            <p className="text-xs text-slate-400 line-clamp-2 mt-1 font-medium">{task.description}</p>
+                                                            
+                                                            <div className="mt-5 flex items-center justify-between border-t border-slate-700/50 pt-4">
+                                                                <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">MAR 19</div>
+                                                                <div className="flex -space-x-2 relative">
+                                                                    <div className="w-7 h-7 rounded-full border-2 border-[#1E293B] bg-gradient-to-tr from-cyan-400 to-indigo-500 z-10 shadow-md"></div>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>

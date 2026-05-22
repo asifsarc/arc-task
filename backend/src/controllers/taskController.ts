@@ -23,7 +23,7 @@ const checkProjectMembership = async (projectId: string, userId: string) => {
 // @access  Private
 export const createTask = asyncHandler(async (req: AuthRequest, res: Response) => {
     const projectId = req.params.projectId as string;
-    const { title, description, status } = req.body;
+    const { title, description, status, priority, duration } = req.body;
 
     const isMember = await checkProjectMembership(projectId, req.user?._id.toString() || '');
     if (!isMember) {
@@ -40,7 +40,9 @@ export const createTask = asyncHandler(async (req: AuthRequest, res: Response) =
         title,
         description,
         status: status || 'Todo',
-        order: newOrder
+        order: newOrder,
+        priority: priority || 'regular',
+        duration: duration || ''
     });
 
     getIO().to(projectId).emit('task_created', task);
@@ -70,7 +72,7 @@ export const getTasks = asyncHandler(async (req: AuthRequest, res: Response) => 
 export const updateTask = asyncHandler(async (req: AuthRequest, res: Response) => {
     const projectId = req.params.projectId as string;
     const id = req.params.id as string;
-    const { title, description, status, assignedTo } = req.body;
+    const { title, description, status, assignedTo, priority, duration } = req.body;
 
     const isMember = await checkProjectMembership(projectId, req.user?._id.toString() || '');
     if (!isMember) {
@@ -89,6 +91,8 @@ export const updateTask = asyncHandler(async (req: AuthRequest, res: Response) =
     task.description = description !== undefined ? description : task.description;
     task.status = status || task.status;
     if (assignedTo) task.assignedTo = assignedTo;
+    if (priority !== undefined) task.priority = priority;
+    if (duration !== undefined) task.duration = duration;
 
     const updatedTask = await task.save();
     getIO().to(projectId).emit('task_updated', updatedTask);

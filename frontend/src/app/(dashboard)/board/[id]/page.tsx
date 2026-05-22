@@ -14,6 +14,8 @@ interface Task {
     description: string;
     status: 'Todo' | 'Doing' | 'Done';
     order: number;
+    priority?: 'regular' | 'urgent';
+    duration?: string;
 }
 
 interface ActiveUser {
@@ -32,11 +34,13 @@ export default function BoardPage() {
     const [loading, setLoading] = useState(true);
     const [activeUsers, setActiveUsers] = useState<ActiveUser[]>([]);
 
-    // Task Creation States
+        // Task Creation States
     const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
     const [creatingTitle, setCreatingTitle] = useState('');
     const [creatingDescription, setCreatingDescription] = useState('');
     const [creatingStatus, setCreatingStatus] = useState<'Todo' | 'Doing' | 'Done'>('Todo');
+    const [creatingPriority, setCreatingPriority] = useState<'regular' | 'urgent'>('regular');
+    const [creatingDuration, setCreatingDuration] = useState('');
     const [isCreatingTask, setIsCreatingTask] = useState(false);
 
     // Task Edit States
@@ -45,6 +49,8 @@ export default function BoardPage() {
     const [editingTitle, setEditingTitle] = useState('');
     const [editingDescription, setEditingDescription] = useState('');
     const [editingStatus, setEditingStatus] = useState<'Todo' | 'Doing' | 'Done'>('Todo');
+    const [editingPriority, setEditingPriority] = useState<'regular' | 'urgent'>('regular');
+    const [editingDuration, setEditingDuration] = useState('');
     const [isEditingTask, setIsEditingTask] = useState(false);
 
     const columns = ['Todo', 'Doing', 'Done'] as const;
@@ -166,6 +172,8 @@ export default function BoardPage() {
                 title: creatingTitle,
                 description: creatingDescription,
                 status: creatingStatus,
+                priority: creatingPriority,
+                duration: creatingDuration,
                 order: tasks.filter(t => t.status === creatingStatus).length * 1000 + 1000
             });
             // Native UI Optimistic update (Socket will re-verify subsequently)
@@ -176,6 +184,8 @@ export default function BoardPage() {
             setIsTaskModalOpen(false);
             setCreatingTitle('');
             setCreatingDescription('');
+            setCreatingPriority('regular');
+            setCreatingDuration('');
         } catch (error) {
             console.error('Failed to create new task', error);
         } finally {
@@ -188,6 +198,8 @@ export default function BoardPage() {
         setEditingTitle(task.title);
         setEditingDescription(task.description);
         setEditingStatus(task.status);
+        setEditingPriority(task.priority || 'regular');
+        setEditingDuration(task.duration || '');
         setIsEditModalOpen(true);
     };
 
@@ -200,7 +212,9 @@ export default function BoardPage() {
             const res = await api.put(`/projects/${projectId}/tasks/${editingTaskId}`, {
                 title: editingTitle,
                 description: editingDescription,
-                status: editingStatus
+                status: editingStatus,
+                priority: editingPriority,
+                duration: editingDuration
             });
             setTasks(prev => prev.map(t => t._id === editingTaskId ? res.data : t));
             setIsEditModalOpen(false);
@@ -348,6 +362,26 @@ export default function BoardPage() {
                                                             
                                                             <p className="text-xs text-slate-400 line-clamp-2 mt-1 font-medium">{task.description}</p>
                                                             
+                                                            {(task.priority || task.duration) && (
+                                                                <div className="flex flex-wrap items-center gap-2 mt-4">
+                                                                    {task.priority === 'urgent' ? (
+                                                                        <span className="text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider bg-rose-500/10 text-rose-400 border border-rose-500/20 shadow-[0_0_8px_rgba(239,68,68,0.15)] flex items-center gap-1">
+                                                                            🚨 Urgent
+                                                                        </span>
+                                                                    ) : (
+                                                                        <span className="text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider bg-slate-800 text-slate-400 border border-slate-700/50">
+                                                                            Regular
+                                                                        </span>
+                                                                    )}
+                                                                    
+                                                                    {task.duration && (
+                                                                        <span className="text-[10px] px-2.5 py-0.5 rounded-full font-semibold bg-slate-800/80 text-indigo-300 border border-slate-700/50 flex items-center gap-1">
+                                                                            ⏱️ {task.duration}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                            
                                                             <div className="mt-5 flex items-center justify-between border-t border-slate-700/50 pt-4">
                                                                 <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">MAR 19</div>
                                                                 <div className="flex -space-x-2 relative">
@@ -412,6 +446,29 @@ export default function BoardPage() {
                                     placeholder="Add details, acceptance criteria, sub-tasks..."
                                 />
                             </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-slate-300 text-xs font-bold uppercase tracking-wider mb-2">Priority</label>
+                                    <select
+                                        value={creatingPriority}
+                                        onChange={(e) => setCreatingPriority(e.target.value as any)}
+                                        className="w-full px-4 py-3 rounded-xl border border-slate-600 bg-slate-800 text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium"
+                                    >
+                                        <option value="regular">Regular</option>
+                                        <option value="urgent">Urgent</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-slate-300 text-xs font-bold uppercase tracking-wider mb-2">Duration</label>
+                                    <input
+                                        type="text"
+                                        value={creatingDuration}
+                                        onChange={(e) => setCreatingDuration(e.target.value)}
+                                        className="w-full px-4 py-3 rounded-xl border border-slate-600 bg-slate-800 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium"
+                                        placeholder="e.g. 2 hours, 3 days"
+                                    />
+                                </div>
+                            </div>
                             
                             <div className="flex justify-between items-center mt-8">
                                 <div className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-md text-xs font-bold text-slate-400 tracking-wider">
@@ -472,6 +529,29 @@ export default function BoardPage() {
                                                                     className="w-full px-4 py-3 rounded-xl border border-slate-600 bg-slate-800 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium resize-none h-24"
                                                                     placeholder="Add details, acceptance criteria, sub-tasks..."
                                                                 />
+                                                            </div>
+                                                            <div className="grid grid-cols-2 gap-4">
+                                                                <div>
+                                                                    <label className="block text-slate-300 text-xs font-bold uppercase tracking-wider mb-2">Priority</label>
+                                                                    <select
+                                                                        value={editingPriority}
+                                                                        onChange={(e) => setEditingPriority(e.target.value as any)}
+                                                                        className="w-full px-4 py-3 rounded-xl border border-slate-600 bg-slate-800 text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium"
+                                                                    >
+                                                                        <option value="regular">Regular</option>
+                                                                        <option value="urgent">Urgent</option>
+                                                                    </select>
+                                                                </div>
+                                                                <div>
+                                                                    <label className="block text-slate-300 text-xs font-bold uppercase tracking-wider mb-2">Duration</label>
+                                                                    <input
+                                                                        type="text"
+                                                                        value={editingDuration}
+                                                                        onChange={(e) => setEditingDuration(e.target.value)}
+                                                                        className="w-full px-4 py-3 rounded-xl border border-slate-600 bg-slate-800 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium"
+                                                                        placeholder="e.g. 2 hours, 3 days"
+                                                                    />
+                                                                </div>
                                                             </div>
                                                             <div>
                                                                 <label className="block text-slate-300 text-xs font-bold uppercase tracking-wider mb-2">Status</label>
